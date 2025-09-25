@@ -67,6 +67,10 @@ export interface OTRequestInput {
   managerTitle: string;
   managerEmail: string;
   hrEmail: string;
+  companyCode?: string | undefined;
+  companyName?: string | undefined;
+  jobCode?: string | undefined;
+  jobName?: string | undefined;
   note?: string | undefined;
   attachmentName?: string | undefined;
   attachmentSize?: number | undefined;
