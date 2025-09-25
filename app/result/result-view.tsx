@@ -13,6 +13,8 @@ export default function ResultView() {
     );
   }
 
+  const startEvidence = request.evidences.find((evidence) => evidence.type === "start");
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-surface-50 via-white to-surface-100 pb-32">
       <header className="mx-auto flex w-full max-w-xl flex-col items-center gap-2 px-6 pb-6 pt-8 text-center">
@@ -47,6 +49,14 @@ export default function ResultView() {
               <dd>{formatHours(request.hours)} hours</dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-slate-500">HR Email</dt>
+              <dd className="text-slate-700">{request.hrEmail}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-slate-500">Proof Capture</dt>
+              <dd className="text-slate-700">{request.proofEnabled ? "Enabled" : "Not attached"}</dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-slate-500">Link/PDF File</dt>
               <dd className="flex items-center gap-2 text-primary-500">
                 <FileText className="h-4 w-4" /> View Document
@@ -55,9 +65,15 @@ export default function ResultView() {
             <div className="flex justify-between">
               <dt className="flex items-center gap-1 text-slate-500"><MapPin className="h-4 w-4 text-primary-400" /> Location</dt>
               <dd className="max-w-[220px] text-right text-slate-700">
-                Lat: {request.evidences[0]?.location?.lat.toFixed(4)}, Lon: {request.evidences[0]?.location?.lng.toFixed(4)}
-                <br />
-                (Acc: {Math.round(request.evidences[0]?.location?.accuracyM ?? 0)}m, Geofence: Inside)
+                {request.proofEnabled && startEvidence?.location ? (
+                  <>
+                    Lat: {startEvidence.location.lat.toFixed(4)}, Lon: {startEvidence.location.lng.toFixed(4)}
+                    <br />
+                    (Acc: {Math.round(startEvidence.location.accuracyM ?? 0)}m, Geofence: {startEvidence.inGeofence ? "Inside" : "Outside"})
+                  </>
+                ) : (
+                  "ไม่แนบข้อมูล"
+                )}
               </dd>
             </div>
             <div className="flex justify-between">
@@ -67,7 +83,7 @@ export default function ResultView() {
           </dl>
         </section>
 
-        <BottomNav active="requests" />
+        <BottomNav active="home" />
       </main>
     </div>
   );

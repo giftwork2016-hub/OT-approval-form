@@ -43,11 +43,13 @@ const requestSchema = z.object({
   managerName: z.string().min(1),
   managerTitle: z.string().min(1),
   managerEmail: z.string().email(),
+  hrEmail: z.string().email(),
   note: z.string().optional(),
   attachmentName: z.string().optional(),
   attachmentSize: z.number().optional(),
   attachmentType: z.string().optional(),
   consent: z.boolean(),
+  proofEnabled: z.boolean(),
   proofConsent: z.boolean(),
   evidences: z.array(evidenceSchema),
 });
@@ -56,8 +58,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = requestSchema.parse(body);
-    if (!parsed.consent || !parsed.proofConsent) {
+    if (!parsed.consent) {
       return NextResponse.json({ message: "Consent is required" }, { status: 400 });
+    }
+    if (parsed.proofEnabled && !parsed.proofConsent) {
+      return NextResponse.json({ message: "Proof consent is required when proof capture is enabled" }, { status: 400 });
     }
     const created = db.createRequest(parsed);
     const tokens = createApprovalTokens(created.id);

@@ -218,11 +218,13 @@ export function seedSampleRequest() {
     managerName: "Alicia Keys",
     managerTitle: "Project Lead",
     managerEmail: "alicia@acme.test",
+    hrEmail: "peopleops@acme.test",
     note: "Project deadline",
     attachmentName: undefined,
     attachmentSize: undefined,
     attachmentType: undefined,
     consent: true,
+    proofEnabled: true,
     proofConsent: true,
     evidences: [
       {

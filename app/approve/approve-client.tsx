@@ -87,6 +87,8 @@ export default function ApproveClient({ requestId, token }: ApproveClientProps) 
     );
   }
 
+  const startEvidence = request.evidences.find((evidence) => evidence.type === "start");
+
   const formatPeriod = `${format(new Date(request.startAt), "yyyy-MM-dd HH:mm", { locale: th })} – ${format(new Date(request.endAt), "HH:mm", { locale: th })}`;
 
   return (
@@ -118,12 +120,26 @@ export default function ApproveClient({ requestId, token }: ApproveClientProps) 
                 <dd>{formatHours(request.hours)} hours</dd>
               </div>
               <div className="flex justify-between">
+                <dt className="font-medium text-slate-500">HR Email</dt>
+                <dd className="text-slate-600">{request.hrEmail}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="font-medium text-slate-500">Proof Capture</dt>
+                <dd className="text-slate-600">{request.proofEnabled ? "Enabled" : "Not attached"}</dd>
+              </div>
+              <div className="flex justify-between">
                 <dt className="font-medium text-slate-500">Reason</dt>
                 <dd className="max-w-[200px] text-right text-slate-600">{request.note ?? "N/A"}</dd>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1 text-slate-400"><MapPin className="h-3.5 w-3.5" /> Geofence</span>
-                <span>{request.evidences?.[0]?.inGeofence ? "Inside" : "Unknown"}</span>
+                <span>
+                  {request.proofEnabled && startEvidence?.inGeofence !== undefined
+                    ? startEvidence.inGeofence
+                      ? "Inside"
+                      : "Outside"
+                    : "Unknown"}
+                </span>
               </div>
             </dl>
           </div>
