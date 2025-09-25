@@ -12,9 +12,7 @@ export default function ProfilePage() {
   const [jobName, setJobName] = useState("");
   const [companySaved, setCompanySaved] = useState(false);
   const [jobSaved, setJobSaved] = useState(false);
-  const [companies, setCompanies] = useState<
-    { name: string; code: string; hrEmail: string }
-  >([]);
+  const [companies, setCompanies] = useState<{ name: string; code: string; hrEmail: string }[]>([]);
   const [jobs, setJobs] = useState<{ id: string; name: string }[]>([]);
 
   const handleCompanySubmit = (event: React.FormEvent<HTMLFormElement>) => {
