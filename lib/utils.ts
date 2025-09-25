@@ -1,7 +1,14 @@
 import { differenceInMinutes, parseISO } from "date-fns";
 
+function getGlobalCrypto(): Crypto | undefined {
+  if (typeof globalThis === "undefined") {
+    return undefined;
+  }
+  return (globalThis.crypto as Crypto | undefined) ?? undefined;
+}
+
 function getRandomInt(max: number): number {
-  const cryptoObj = typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
+  const cryptoObj = getGlobalCrypto();
   if (cryptoObj && "getRandomValues" in cryptoObj) {
     const buffer = new Uint32Array(1);
     cryptoObj.getRandomValues(buffer);
@@ -17,6 +24,41 @@ export function generateDocumentNumber(companyCode: string, jobCode: string): st
   const base = `${companyCode}-${jobCode}`.replace(/\s+/g, "");
   const random = getRandomInt(1_000_000).toString().padStart(6, "0");
   return `${base}-${random}`;
+}
+
+function createUuidFallback(): string {
+  const randomBytes = new Uint8Array(16);
+  const cryptoObj = getGlobalCrypto();
+
+  if (cryptoObj?.getRandomValues) {
+    cryptoObj.getRandomValues(randomBytes);
+  } else {
+    for (let index = 0; index < randomBytes.length; index += 1) {
+      randomBytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  const byte6 = randomBytes[6] ?? 0;
+  randomBytes[6] = (byte6 & 0x0f) | 0x40;
+  const byte8 = randomBytes[8] ?? 0;
+  randomBytes[8] = (byte8 & 0x3f) | 0x80;
+
+  const hex = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex
+    .slice(10, 16)
+    .join("")}`;
+}
+
+export function safeRandomUUID(): string {
+  const cryptoObj = getGlobalCrypto();
+  if (typeof cryptoObj?.randomUUID === "function") {
+    try {
+      return cryptoObj.randomUUID();
+    } catch (error) {
+      // fall back to manual generation below
+    }
+  }
+  return createUuidFallback();
 }
 
 export function calculateOtHours(startISO: string, endISO: string): number {

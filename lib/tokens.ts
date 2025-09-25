@@ -1,6 +1,6 @@
-import crypto from "node:crypto";
 import { addHours, isAfter } from "date-fns";
 import type { ApprovalToken } from "./types";
+import { safeRandomUUID } from "./utils";
 
 const tokens = new Map<string, ApprovalToken>();
 
@@ -9,10 +9,10 @@ export function createApprovalTokens(requestId: string): ApprovalToken[] {
   const created: ApprovalToken[] = [];
   for (const action of actions) {
     const token: ApprovalToken = {
-      id: crypto.randomUUID(),
+      id: safeRandomUUID(),
       requestId,
       action,
-      token: crypto.randomUUID(),
+      token: safeRandomUUID(),
       expiresAt: addHours(new Date(), 72).toISOString(),
       usedAt: null,
     };
