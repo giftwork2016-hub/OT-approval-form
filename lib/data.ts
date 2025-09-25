@@ -134,20 +134,31 @@ export const db = {
     const company = companies.find((c) => c.id === input.companyId);
     const job = jobs.find((j) => j.id === input.jobId);
 
-    if (!company || !job) {
-      throw new Error("Invalid company or job selection");
-    }
+    const resolvedCompany: Company = company ?? {
+      id: input.companyId,
+      code: input.companyCode?.trim() || input.companyId,
+      name: input.companyName?.trim() || input.companyCode?.trim() || input.companyId,
+      hrEmail: input.hrEmail,
+    };
+
+    const resolvedJob: Job = job ?? {
+      id: input.jobId,
+      companyId: resolvedCompany.id,
+      jobCode: input.jobCode?.trim() || input.jobId,
+      jobName: input.jobName?.trim() || input.jobCode?.trim() || input.jobId,
+      active: true,
+    };
 
     const id = safeRandomUUID();
-    const docNo = generateDocumentNumber(company.code, job.jobCode);
+    const docNo = generateDocumentNumber(resolvedCompany.code, resolvedJob.jobCode);
     const hours = calculateOtHours(input.startAt, input.endAt);
     const createdAt = new Date().toISOString();
 
     const request: OTRequest = {
       id,
       docNo,
-      company,
-      job,
+      company: resolvedCompany,
+      job: resolvedJob,
       hours,
       status: "submitted",
       createdAt,
