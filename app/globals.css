@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body {
+  background: var(--bg, #f6f8ff);
+  font-family: theme("fontFamily.sans");
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f9fbff 0%, #eef2ff 100%);
+}
+
+.dark body {
+  background: radial-gradient(circle at top, #0e1129, #05060f);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(116, 128, 255, 0.6);
+  border-radius: 9999px;
+}
+
+input::-webkit-calendar-picker-indicator {
+  filter: invert(44%) sepia(84%) saturate(3466%) hue-rotate(216deg) brightness(97%) contrast(98%);
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl bg-white shadow-lg shadow-primary-200/40 dark:bg-slate-900 dark:shadow-primary-900/30;
+  }
+
+  .label {
+    @apply text-sm font-medium text-slate-600 dark:text-slate-300;
+  }
+
+  .input {
+    @apply mt-1 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-800 transition focus:border-primary-400 focus:outline-none focus:ring-4 focus:ring-primary-300/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100;
+  }
+
+  .section-title {
+    @apply text-base font-semibold text-primary-700 dark:text-primary-200;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-sm font-medium text-primary-600 dark:bg-primary-900/40 dark:text-primary-200;
+  }
+}
