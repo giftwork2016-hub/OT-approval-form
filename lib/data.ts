@@ -110,6 +110,7 @@ export const db = {
         label: company.name,
         description: company.code,
         code: company.code,
+        hrEmail: company.hrEmail,
       }));
   },
   searchJobs(companyId: string | undefined, query: string): AutocompleteOption[] {

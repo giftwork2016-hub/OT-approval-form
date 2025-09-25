@@ -15,6 +15,7 @@ import type { AutocompleteOption, EvidenceRecord, EvidenceType } from "@/lib/typ
 import { FileUp, Info, Mail, NotebookPen, ShieldQuestion } from "lucide-react";
 import clsx from "clsx";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
+import { useProfileStore } from "@/lib/hooks/useProfileStore";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -58,6 +59,7 @@ export default function HomePage() {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
   const [submitting, setSubmitting] = useState(false);
+  const { companies: savedCompanies, jobs: savedJobs } = useProfileStore();
 
   useEffect(() => {
     if (!proofEnabled) {
@@ -93,14 +95,74 @@ export default function HomePage() {
     return calculateOtHours(new Date(startAt).toISOString(), new Date(endAt).toISOString());
   }, [startAt, endAt]);
 
-  const { data: companyResult, isLoading: loadingCompanies } = useSWR(`/api/public/autocomplete/companies?q=${encodeURIComponent(companyQuery)}`, fetcher);
-  const companyOptions = companyResult?.data ?? [];
+  const { data: companyResult, isLoading: loadingCompanies } = useSWR(
+    `/api/public/autocomplete/companies?q=${encodeURIComponent(companyQuery)}`,
+    fetcher,
+  );
+  const remoteCompanyOptions = companyResult?.data ?? [];
+  const savedCompanyOptions = useMemo(
+    () =>
+      savedCompanies.map<AutocompleteOption>((company) => ({
+        id: company.id,
+        label: company.name,
+        description: company.code,
+        code: company.code,
+        hrEmail: company.hrEmail,
+      })),
+    [savedCompanies],
+  );
+  const companyOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const combined: AutocompleteOption[] = [];
+
+    for (const option of savedCompanyOptions) {
+      if (seen.has(option.id)) continue;
+      seen.add(option.id);
+      combined.push(option);
+    }
+
+    for (const option of remoteCompanyOptions) {
+      if (seen.has(option.id)) continue;
+      seen.add(option.id);
+      combined.push(option);
+    }
+
+    return combined;
+  }, [savedCompanyOptions, remoteCompanyOptions]);
 
   const { data: jobResult, isLoading: loadingJobs } = useSWR(
     selectedCompany ? `/api/public/autocomplete/jobs?company_id=${selectedCompany.id}&q=${encodeURIComponent(jobQuery)}` : null,
     fetcher,
   );
-  const jobOptions = jobResult?.data ?? [];
+  const remoteJobOptions = jobResult?.data ?? [];
+  const savedJobOptions = useMemo(
+    () =>
+      savedJobs.map<AutocompleteOption>((job) => ({
+        id: job.id,
+        label: job.code,
+        description: job.name,
+        code: job.code,
+      })),
+    [savedJobs],
+  );
+  const jobOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const combined: AutocompleteOption[] = [];
+
+    for (const option of savedJobOptions) {
+      if (seen.has(option.id)) continue;
+      seen.add(option.id);
+      combined.push(option);
+    }
+
+    for (const option of remoteJobOptions) {
+      if (seen.has(option.id)) continue;
+      seen.add(option.id);
+      combined.push(option);
+    }
+
+    return combined;
+  }, [savedJobOptions, remoteJobOptions]);
 
   const handleCompanyChange = (option: AutocompleteOption | null) => {
     setSelectedCompany(option);
@@ -110,10 +172,12 @@ export default function HomePage() {
       setValue("companyId", option.id, { shouldValidate: true });
       setDocNo(generateDocumentNumber(option.code ?? option.label, "OT"));
       setCompanyInput(option.label);
+      setValue("hrEmail", option.hrEmail ?? "", { shouldValidate: true });
     } else {
       setValue("companyId", "", { shouldValidate: true });
       setDocNo("รอสร้างเมื่อเลือกข้อมูล");
       setCompanyInput("");
+      setValue("hrEmail", "", { shouldValidate: true });
     }
   };
 

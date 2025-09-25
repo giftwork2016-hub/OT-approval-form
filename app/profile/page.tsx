@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { Building2, Briefcase, CheckCircle2 } from "lucide-react";
+import { useProfileStore } from "@/lib/hooks/useProfileStore";
 
 export default function ProfilePage() {
   const [companyName, setCompanyName] = useState("");
@@ -12,15 +13,11 @@ export default function ProfilePage() {
   const [jobName, setJobName] = useState("");
   const [companySaved, setCompanySaved] = useState(false);
   const [jobSaved, setJobSaved] = useState(false);
-  const [companies, setCompanies] = useState<{ name: string; code: string; hrEmail: string }[]>([]);
-  const [jobs, setJobs] = useState<{ id: string; name: string }[]>([]);
+  const { companies, jobs, addCompany, addJob } = useProfileStore();
 
   const handleCompanySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setCompanies((previousCompanies) => [
-      ...previousCompanies,
-      { name: companyName, code: companyCode, hrEmail: companyHrEmail },
-    ]);
+    addCompany({ name: companyName, code: companyCode, hrEmail: companyHrEmail });
     setCompanyName("");
     setCompanyCode("");
     setCompanyHrEmail("");
@@ -30,7 +27,7 @@ export default function ProfilePage() {
 
   const handleJobSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setJobs((previousJobs) => [...previousJobs, { id: jobId, name: jobName }]);
+    addJob({ code: jobId, name: jobName });
     setJobId("");
     setJobName("");
     setJobSaved(true);
@@ -194,9 +191,9 @@ export default function ProfilePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {jobs.map((job, index) => (
-                    <tr key={`${job.id}-${job.name}-${index}`}>
+                    <tr key={`${job.id}-${job.code}-${index}`}>
                       <td className="px-4 py-3 text-slate-400">{index + 1}</td>
-                      <td className="px-4 py-3 font-medium text-slate-700">{job.id}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700">{job.code}</td>
                       <td className="px-4 py-3">{job.name}</td>
                     </tr>
                   ))}

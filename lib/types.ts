@@ -110,4 +110,5 @@ export interface AutocompleteOption {
   label: string;
   description?: string;
   code?: string;
+  hrEmail?: string;
 }
