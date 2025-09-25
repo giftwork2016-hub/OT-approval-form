@@ -1,5 +1,5 @@
 import type { AutocompleteOption, Company, CompanySite, Job, OTRequest, OTRequestInput } from "./types";
-import { calculateOtHours, generateDocumentNumber } from "./utils";
+import { calculateOtHours, generateDocumentNumber, safeRandomUUID } from "./utils";
 
 const companies: Company[] = [
   {
@@ -137,7 +137,7 @@ export const db = {
       throw new Error("Invalid company or job selection");
     }
 
-    const id = crypto.randomUUID();
+    const id = safeRandomUUID();
     const docNo = generateDocumentNumber(company.code, job.jobCode);
     const hours = calculateOtHours(input.startAt, input.endAt);
     const createdAt = new Date().toISOString();
@@ -152,7 +152,7 @@ export const db = {
       createdAt,
       auditLog: [
         {
-          id: crypto.randomUUID(),
+          id: safeRandomUUID(),
           actor: input.employeeEmail,
           action: "submitted",
           meta: {
@@ -186,7 +186,7 @@ export const db = {
     request.auditLog = [
       ...request.auditLog,
       {
-        id: crypto.randomUUID(),
+        id: safeRandomUUID(),
         actor,
         action: status,
         meta: { reason },
