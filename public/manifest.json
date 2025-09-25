@@ -1,0 +1,16 @@
+{
+  "name": "OT Request Portal",
+  "short_name": "OT Request",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fbff",
+  "theme_color": "#4b5aff",
+  "description": "Submit OT requests with location proof from any device.",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    }
+  ]
+}
