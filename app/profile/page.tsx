@@ -12,15 +12,29 @@ export default function ProfilePage() {
   const [jobName, setJobName] = useState("");
   const [companySaved, setCompanySaved] = useState(false);
   const [jobSaved, setJobSaved] = useState(false);
+  const [companies, setCompanies] = useState<
+    { name: string; code: string; hrEmail: string }
+  >([]);
+  const [jobs, setJobs] = useState<{ id: string; name: string }[]>([]);
 
   const handleCompanySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setCompanies((previousCompanies) => [
+      ...previousCompanies,
+      { name: companyName, code: companyCode, hrEmail: companyHrEmail },
+    ]);
+    setCompanyName("");
+    setCompanyCode("");
+    setCompanyHrEmail("");
     setCompanySaved(true);
     setTimeout(() => setCompanySaved(false), 3000);
   };
 
   const handleJobSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setJobs((previousJobs) => [...previousJobs, { id: jobId, name: jobName }]);
+    setJobId("");
+    setJobName("");
     setJobSaved(true);
     setTimeout(() => setJobSaved(false), 3000);
   };
@@ -90,6 +104,41 @@ export default function ProfilePage() {
           ) : null}
         </form>
 
+        <section className="card space-y-6 p-6 sm:p-8">
+          <div className="flex items-center gap-3">
+            <div className="pill">Company Records</div>
+            <Building2 className="h-5 w-5 text-primary-400" />
+          </div>
+          {companies.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm text-slate-600">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wider text-slate-400">
+                    <th className="px-4 py-3 font-medium">ลำดับ</th>
+                    <th className="px-4 py-3 font-medium">ชื่อบริษัท</th>
+                    <th className="px-4 py-3 font-medium">Company Code</th>
+                    <th className="px-4 py-3 font-medium">HR Email</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {companies.map((company, index) => (
+                    <tr key={`${company.name}-${company.code}-${index}`}>
+                      <td className="px-4 py-3 text-slate-400">{index + 1}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700">{company.name}</td>
+                      <td className="px-4 py-3">{company.code}</td>
+                      <td className="px-4 py-3">{company.hrEmail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-400">
+              ยังไม่มีข้อมูลบริษัทที่บันทึกไว้
+            </p>
+          )}
+        </section>
+
         <form className="card space-y-6 p-6 sm:p-8" onSubmit={handleJobSubmit}>
           <div className="flex items-center gap-3">
             <div className="pill">Job Defaults</div>
@@ -129,6 +178,39 @@ export default function ProfilePage() {
             </div>
           ) : null}
         </form>
+
+        <section className="card space-y-6 p-6 sm:p-8">
+          <div className="flex items-center gap-3">
+            <div className="pill">Job Records</div>
+            <Briefcase className="h-5 w-5 text-primary-400" />
+          </div>
+          {jobs.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm text-slate-600">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wider text-slate-400">
+                    <th className="px-4 py-3 font-medium">ลำดับ</th>
+                    <th className="px-4 py-3 font-medium">Job ID</th>
+                    <th className="px-4 py-3 font-medium">Job Name</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {jobs.map((job, index) => (
+                    <tr key={`${job.id}-${job.name}-${index}`}>
+                      <td className="px-4 py-3 text-slate-400">{index + 1}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700">{job.id}</td>
+                      <td className="px-4 py-3">{job.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-400">
+              ยังไม่มีข้อมูลงานที่บันทึกไว้
+            </p>
+          )}
+        </section>
 
         <div className="rounded-3xl bg-white/70 p-6 text-sm text-slate-500 shadow-inner shadow-primary-100/60">
           <p className="font-semibold text-slate-700">Tips</p>
