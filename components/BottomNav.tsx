@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Home, ListChecks, UserCircle2 } from "lucide-react";
 import clsx from "clsx";
 
@@ -9,9 +10,9 @@ interface BottomNavProps {
 
 export function BottomNav({ active = "home" }: BottomNavProps) {
   const items = [
-    { key: "home", label: "Home", icon: Home },
-    { key: "requests", label: "My Requests", icon: ListChecks },
-    { key: "profile", label: "Profile", icon: UserCircle2 },
+    { key: "home", label: "Home", icon: Home, href: "/result" },
+    { key: "requests", label: "My Requests", icon: ListChecks, href: "/" },
+    { key: "profile", label: "Profile", icon: UserCircle2, href: "/profile" },
   ] as const;
 
   return (
@@ -20,17 +21,18 @@ export function BottomNav({ active = "home" }: BottomNavProps) {
         const Icon = item.icon;
         const isActive = item.key === active;
         return (
-          <button
+          <Link
             key={item.key}
-            type="button"
+            href={item.href}
             className={clsx(
               "flex flex-col items-center gap-1 rounded-2xl px-4 py-2 text-xs font-semibold transition",
               isActive ? "bg-primary-50 text-primary-600" : "text-slate-400",
             )}
+            aria-current={isActive ? "page" : undefined}
           >
             <Icon className={clsx("h-5 w-5", isActive ? "text-primary-500" : "text-slate-300")} />
             {item.label}
-          </button>
+          </Link>
         );
       })}
     </nav>

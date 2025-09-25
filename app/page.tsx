@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,7 @@ import type { ProofEntry } from "@/components/ProofCapture";
 import { StickySubmitBar } from "@/components/StickySubmitBar";
 import { BottomNav } from "@/components/BottomNav";
 import { calculateOtHours, formatDateForInput, formatHours, generateDocumentNumber } from "@/lib/utils";
-import type { AutocompleteOption, EvidenceType } from "@/lib/types";
+import type { AutocompleteOption, EvidenceRecord, EvidenceType } from "@/lib/types";
 import { FileUp, Info, Mail, NotebookPen, ShieldQuestion } from "lucide-react";
 import clsx from "clsx";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
@@ -29,6 +29,7 @@ const formSchema = z.object({
   managerName: z.string().min(1, "ระบุชื่อหัวหน้า"),
   managerTitle: z.string().min(1, "ระบุตำแหน่งหัวหน้า"),
   managerEmail: z.string().email("อีเมลหัวหน้าไม่ถูกต้อง"),
+  hrEmail: z.string().email("อีเมล HR ไม่ถูกต้อง"),
   note: z.string().optional(),
   consent: z.boolean().refine((value) => value, { message: "จำเป็นต้องยอมรับ" }),
 });
@@ -51,11 +52,19 @@ export default function HomePage() {
   const companyQuery = useDebouncedValue(companyInput, 250);
   const jobQuery = useDebouncedValue(jobInput, 250);
   const [docNo, setDocNo] = useState<string>("รอสร้างเมื่อเลือกข้อมูล");
+  const [proofEnabled, setProofEnabled] = useState(false);
   const [proofEntries, setProofEntries] = useState<Partial<Record<EvidenceType, ProofEntry>>>({});
   const [proofConsent, setProofConsent] = useState(false);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [submission, setSubmission] = useState<SubmissionState>({ status: "idle" });
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!proofEnabled) {
+      setProofEntries({});
+      setProofConsent(false);
+    }
+  }, [proofEnabled]);
 
   const {
     register,
@@ -71,6 +80,7 @@ export default function HomePage() {
       jobId: "",
       startAt: formatDateForInput(defaultStart),
       endAt: formatDateForInput(defaultEnd),
+      hrEmail: "",
       consent: false,
     },
   });
@@ -137,7 +147,7 @@ export default function HomePage() {
     });
 
   const onSubmit = async (values: FormValues) => {
-    if (!proofConsent) {
+    if (proofEnabled && !proofConsent) {
       setSubmission({ status: "error", message: "กรุณายืนยันการยินยอมบันทึกข้อมูลพิกัด" });
       return;
     }
@@ -145,43 +155,51 @@ export default function HomePage() {
     setSubmitting(true);
     setSubmission({ status: "idle" });
     try {
-      const evidencePayload = await Promise.all(
-        (Object.keys(proofEntries) as EvidenceType[]).map(async (type) => {
-          const entry = proofEntries[type];
-          if (!entry) return null;
-          const photo = entry.photo?.file
-            ? {
-                url: await fileToDataUrl(entry.photo.file),
-                hash: entry.photo.hash,
-                size: entry.photo.size,
-                mimeType: entry.photo.mimeType,
-                capturedAt: entry.photo.capturedAt,
-              }
-            : undefined;
-          return {
-            type,
-            photo,
-            location: entry.location,
-            inGeofence: entry.inGeofence,
-            lowAccuracy: entry.lowAccuracy,
-            riskOutOfBounds: entry.riskOutOfBounds,
-            siteId: entry.siteId ?? null,
-          };
-        }),
-      );
+      const resolvedEvidences: (EvidenceRecord | null)[] = proofEnabled
+        ? await Promise.all(
+            (Object.keys(proofEntries) as EvidenceType[]).map(async (type) => {
+              const entry = proofEntries[type];
+              if (!entry) return null;
+              const photo = entry.photo?.file
+                ? {
+                    url: await fileToDataUrl(entry.photo.file),
+                    hash: entry.photo.hash,
+                    size: entry.photo.size,
+                    mimeType: entry.photo.mimeType,
+                    capturedAt: entry.photo.capturedAt,
+                  }
+                : undefined;
+              const record: EvidenceRecord = {
+                type,
+                photo,
+                location: entry.location,
+                inGeofence: entry.inGeofence,
+                lowAccuracy: entry.lowAccuracy,
+                riskOutOfBounds: entry.riskOutOfBounds,
+                siteId: entry.siteId ?? null,
+              };
+              return record;
+            }),
+          )
+        : [];
+      const evidencePayload: EvidenceRecord[] = proofEnabled
+        ? resolvedEvidences.filter((record): record is EvidenceRecord => Boolean(record))
+        : [];
 
       const payload = {
         ...values,
         employeeEmail: values.employeeEmail.trim(),
         managerEmail: values.managerEmail.trim(),
+        hrEmail: values.hrEmail.trim(),
         startAt: new Date(values.startAt).toISOString(),
         endAt: new Date(values.endAt).toISOString(),
         attachmentName: attachmentFile?.name,
         attachmentSize: attachmentFile?.size,
         attachmentType: attachmentFile?.type,
         consent: values.consent,
-        proofConsent,
-        evidences: evidencePayload.filter(Boolean),
+        proofEnabled,
+        proofConsent: proofEnabled ? proofConsent : false,
+        evidences: evidencePayload,
       };
 
       const response = await fetch("/api/public/ot-requests", {
@@ -347,6 +365,25 @@ export default function HomePage() {
 
           <section className="space-y-4">
             <div className="flex items-center gap-3">
+              <div className="pill">HR Notification</div>
+              <Mail className="h-5 w-5 text-primary-400" />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="label">HR Email</label>
+                <input
+                  className={clsx("input", errors.hrEmail && "border-danger focus:ring-danger/40")}
+                  {...register("hrEmail")}
+                  inputMode="email"
+                  placeholder="hr@example.com"
+                />
+                {errors.hrEmail ? <p className="mt-1 text-xs text-danger">{errors.hrEmail.message}</p> : null}
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
               <div className="pill">Additional Details</div>
               <Info className="h-5 w-5 text-primary-400" />
             </div>
@@ -388,6 +425,8 @@ export default function HomePage() {
             companyId={selectedCompany?.id}
             value={proofEntries}
             onChange={updateProofEntry}
+            enabled={proofEnabled}
+            onEnabledChange={setProofEnabled}
             consent={proofConsent}
             onConsentChange={setProofConsent}
           />

@@ -66,11 +66,13 @@ export interface OTRequestInput {
   managerName: string;
   managerTitle: string;
   managerEmail: string;
+  hrEmail: string;
   note?: string | undefined;
   attachmentName?: string | undefined;
   attachmentSize?: number | undefined;
   attachmentType?: string | undefined;
   consent: boolean;
+  proofEnabled: boolean;
   proofConsent: boolean;
   evidences: EvidenceRecord[];
 }
