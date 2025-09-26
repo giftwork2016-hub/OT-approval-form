@@ -16,6 +16,7 @@ export interface StoredJob {
   id: string;
   code: string;
   name: string;
+  companyId: string | null;
 }
 
 interface ProfileState {
@@ -28,32 +29,66 @@ const defaultState: ProfileState = {
   jobs: [],
 };
 
+function toArray(input: unknown): unknown[] {
+  if (Array.isArray(input)) {
+    return input;
+  }
+
+  if (input && typeof input === "object") {
+    return Object.values(input as Record<string, unknown>);
+  }
+
+  return [];
+}
+
+function isStoredCompany(value: unknown): value is StoredCompany {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    typeof (value as StoredCompany).id === "string" &&
+    typeof (value as StoredCompany).name === "string" &&
+    typeof (value as StoredCompany).code === "string" &&
+    typeof (value as StoredCompany).hrEmail === "string"
+  );
+}
+
+function parseStoredJob(value: unknown): StoredJob | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const baseJob = value as Partial<StoredJob> & { id?: string; code?: string; name?: string };
+
+  if (
+    typeof baseJob.id !== "string" ||
+    typeof baseJob.code !== "string" ||
+    typeof baseJob.name !== "string"
+  ) {
+    return null;
+  }
+
+  const rawCompanyId = (value as StoredJob).companyId;
+  const trimmedCompanyId =
+    typeof rawCompanyId === "string" ? rawCompanyId.trim() : "";
+  const companyId = trimmedCompanyId.length > 0 ? trimmedCompanyId : null;
+
+  return {
+    id: baseJob.id,
+    code: baseJob.code,
+    name: baseJob.name,
+    companyId,
+  } satisfies StoredJob;
+}
+
 function parseState(value: unknown): ProfileState {
   if (!value || typeof value !== "object") return defaultState;
 
   const maybeState = value as Partial<ProfileState>;
-  const companies = Array.isArray(maybeState.companies)
-    ? maybeState.companies.filter(
-        (company): company is StoredCompany =>
-          Boolean(company) &&
-          typeof company === "object" &&
-          typeof (company as StoredCompany).id === "string" &&
-          typeof (company as StoredCompany).name === "string" &&
-          typeof (company as StoredCompany).code === "string" &&
-          typeof (company as StoredCompany).hrEmail === "string",
-      )
-    : [];
+  const companies = toArray(maybeState.companies).filter(isStoredCompany);
 
-  const jobs = Array.isArray(maybeState.jobs)
-    ? maybeState.jobs.filter(
-        (job): job is StoredJob =>
-          Boolean(job) &&
-          typeof job === "object" &&
-          typeof (job as StoredJob).id === "string" &&
-          typeof (job as StoredJob).code === "string" &&
-          typeof (job as StoredJob).name === "string",
-      )
-    : [];
+  const jobs = toArray(maybeState.jobs)
+    .map(parseStoredJob)
+    .filter((job): job is StoredJob => Boolean(job));
 
   return {
     companies,
@@ -92,7 +127,9 @@ export function useProfileStore() {
     const hrEmail = input.hrEmail.trim();
 
     setState((previous) => {
-      const existing = previous.companies.find(
+      const previousCompanies = Array.isArray(previous.companies) ? previous.companies : [];
+
+      const existing = previousCompanies.find(
         (company) =>
           company.name.toLowerCase() === name.toLowerCase() &&
           company.code.toLowerCase() === code.toLowerCase(),
@@ -103,10 +140,10 @@ export function useProfileStore() {
         : { id: safeRandomUUID(), name, code, hrEmail };
 
       const companies = existing
-        ? previous.companies.map((company) =>
+        ? previousCompanies.map((company) =>
             company.id === existing.id ? nextCompany : company,
           )
-        : [...previous.companies, nextCompany];
+        : [...previousCompanies, nextCompany];
 
       return {
         ...previous,
@@ -118,19 +155,24 @@ export function useProfileStore() {
   const addJob = useCallback((input: Omit<StoredJob, "id">) => {
     const code = input.code.trim();
     const name = input.name.trim();
+    const trimmedCompanyId =
+      typeof input.companyId === "string" ? input.companyId.trim() : "";
+    const companyId = trimmedCompanyId.length > 0 ? trimmedCompanyId : null;
 
     setState((previous) => {
-      const existing = previous.jobs.find(
+      const previousJobs = Array.isArray(previous.jobs) ? previous.jobs : [];
+
+      const existing = previousJobs.find(
         (job) => job.code.toLowerCase() === code.toLowerCase(),
       );
 
       const nextJob: StoredJob = existing
-        ? { ...existing, code, name }
-        : { id: safeRandomUUID(), code, name };
+        ? { ...existing, code, name, companyId }
+        : { id: safeRandomUUID(), code, name, companyId };
 
       const jobs = existing
-        ? previous.jobs.map((job) => (job.id === existing.id ? nextJob : job))
-        : [...previous.jobs, nextJob];
+        ? previousJobs.map((job) => (job.id === existing.id ? nextJob : job))
+        : [...previousJobs, nextJob];
 
       return {
         ...previous,
