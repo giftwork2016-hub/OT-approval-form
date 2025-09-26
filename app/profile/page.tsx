@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { Building2, Briefcase, CheckCircle2 } from "lucide-react";
 import { useProfileStore } from "@/lib/hooks/useProfileStore";
@@ -11,9 +11,22 @@ export default function ProfilePage() {
   const [companyHrEmail, setCompanyHrEmail] = useState("");
   const [jobId, setJobId] = useState("");
   const [jobName, setJobName] = useState("");
+  const [jobCompanyId, setJobCompanyId] = useState("");
   const [companySaved, setCompanySaved] = useState(false);
   const [jobSaved, setJobSaved] = useState(false);
   const { companies, jobs, addCompany, addJob } = useProfileStore();
+
+  useEffect(() => {
+    if (companies.length === 0) {
+      setJobCompanyId("");
+      return;
+    }
+
+    setJobCompanyId((previous) => {
+      const stillExists = companies.some((company) => company.id === previous);
+      return stillExists ? previous : companies[0]?.id ?? "";
+    });
+  }, [companies]);
 
   const handleCompanySubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,7 +40,10 @@ export default function ProfilePage() {
 
   const handleJobSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    addJob({ code: jobId, name: jobName });
+    if (!jobCompanyId) {
+      return;
+    }
+    addJob({ code: jobId, name: jobName, companyId: jobCompanyId });
     setJobId("");
     setJobName("");
     setJobSaved(true);
@@ -160,10 +176,30 @@ export default function ProfilePage() {
                 required
               />
             </div>
+            <div className="sm:col-span-2">
+              <label className="label">บริษัทที่เป็นเจ้าของงาน</label>
+              <select
+                className="input"
+                value={jobCompanyId}
+                onChange={(event) => setJobCompanyId(event.target.value)}
+                disabled={companies.length === 0}
+                required
+              >
+                {companies.length === 0 ? (
+                  <option value="">กรุณาบันทึกข้อมูลบริษัทก่อน</option>
+                ) : null}
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <button
             type="submit"
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-500 px-4 py-3 font-semibold text-white shadow-lg shadow-primary-400/30 transition hover:bg-primary-600"
+            disabled={companies.length === 0}
           >
             บันทึกข้อมูลงาน
           </button>
@@ -187,16 +223,21 @@ export default function ProfilePage() {
                     <th className="px-4 py-3 font-medium">ลำดับ</th>
                     <th className="px-4 py-3 font-medium">Job ID</th>
                     <th className="px-4 py-3 font-medium">Job Name</th>
+                    <th className="px-4 py-3 font-medium">บริษัท</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {jobs.map((job, index) => (
-                    <tr key={`${job.id}-${job.code}-${index}`}>
-                      <td className="px-4 py-3 text-slate-400">{index + 1}</td>
-                      <td className="px-4 py-3 font-medium text-slate-700">{job.code}</td>
-                      <td className="px-4 py-3">{job.name}</td>
-                    </tr>
-                  ))}
+                  {jobs.map((job, index) => {
+                    const company = companies.find((item) => item.id === job.companyId);
+                    return (
+                      <tr key={`${job.id}-${job.code}-${index}`}>
+                        <td className="px-4 py-3 text-slate-400">{index + 1}</td>
+                        <td className="px-4 py-3 font-medium text-slate-700">{job.code}</td>
+                        <td className="px-4 py-3">{job.name}</td>
+                        <td className="px-4 py-3">{company ? company.name : "ไม่ระบุ"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
