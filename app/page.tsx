@@ -18,6 +18,7 @@ import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useProfileStore } from "@/lib/hooks/useProfileStore";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const EMPTY_AUTOCOMPLETE_OPTIONS: readonly AutocompleteOption[] = [];
 
 const formSchema = z.object({
   companyId: z.string().min(1, "โปรดเลือกบริษัท"),
@@ -99,7 +100,7 @@ export default function HomePage() {
     `/api/public/autocomplete/companies?q=${encodeURIComponent(companyQuery)}`,
     fetcher,
   );
-  const remoteCompanyOptions = companyResult?.data ?? [];
+  const remoteCompanyOptions = companyResult?.data ?? EMPTY_AUTOCOMPLETE_OPTIONS;
   const savedCompanyOptions = useMemo(
     () =>
       savedCompanies.map<AutocompleteOption>((company) => ({
@@ -134,7 +135,7 @@ export default function HomePage() {
     selectedCompany ? `/api/public/autocomplete/jobs?company_id=${selectedCompany.id}&q=${encodeURIComponent(jobQuery)}` : null,
     fetcher,
   );
-  const remoteJobOptions = jobResult?.data ?? [];
+  const remoteJobOptions = jobResult?.data ?? EMPTY_AUTOCOMPLETE_OPTIONS;
   const savedJobOptions = useMemo(
     () =>
       savedJobs.map<AutocompleteOption>((job) => ({
