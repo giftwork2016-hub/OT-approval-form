@@ -84,11 +84,7 @@ function parseState(value: unknown): ProfileState {
   if (!value || typeof value !== "object") return defaultState;
 
   const maybeState = value as Partial<ProfileState>;
-  const companies = toArray(maybeState.companies).filter(isStoredCompany);
 
-  const jobs = toArray(maybeState.jobs)
-    .map(parseStoredJob)
-    .filter((job): job is StoredJob => Boolean(job));
 
   return {
     companies,
@@ -155,9 +151,6 @@ export function useProfileStore() {
   const addJob = useCallback((input: Omit<StoredJob, "id">) => {
     const code = input.code.trim();
     const name = input.name.trim();
-    const trimmedCompanyId =
-      typeof input.companyId === "string" ? input.companyId.trim() : "";
-    const companyId = trimmedCompanyId.length > 0 ? trimmedCompanyId : null;
 
     setState((previous) => {
       const previousJobs = Array.isArray(previous.jobs) ? previous.jobs : [];
