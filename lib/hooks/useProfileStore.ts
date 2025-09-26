@@ -16,6 +16,7 @@ export interface StoredJob {
   id: string;
   code: string;
   name: string;
+  companyId: string | null;
 }
 
 interface ProfileState {
@@ -45,14 +46,31 @@ function parseState(value: unknown): ProfileState {
     : [];
 
   const jobs = Array.isArray(maybeState.jobs)
-    ? maybeState.jobs.filter(
-        (job): job is StoredJob =>
-          Boolean(job) &&
-          typeof job === "object" &&
-          typeof (job as StoredJob).id === "string" &&
-          typeof (job as StoredJob).code === "string" &&
-          typeof (job as StoredJob).name === "string",
-      )
+    ? maybeState.jobs
+        .map((job) => {
+          if (!job || typeof job !== "object") return null;
+
+          const baseJob = job as Partial<StoredJob> & { id?: string; code?: string; name?: string };
+
+          if (
+            typeof baseJob.id !== "string" ||
+            typeof baseJob.code !== "string" ||
+            typeof baseJob.name !== "string"
+          ) {
+            return null;
+          }
+
+          const companyId =
+            typeof (job as StoredJob).companyId === "string" ? (job as StoredJob).companyId : null;
+
+          return {
+            id: baseJob.id,
+            code: baseJob.code,
+            name: baseJob.name,
+            companyId,
+          } satisfies StoredJob;
+        })
+        .filter((job): job is StoredJob => Boolean(job))
     : [];
 
   return {
@@ -118,6 +136,7 @@ export function useProfileStore() {
   const addJob = useCallback((input: Omit<StoredJob, "id">) => {
     const code = input.code.trim();
     const name = input.name.trim();
+    const companyId = input.companyId;
 
     setState((previous) => {
       const existing = previous.jobs.find(
@@ -125,8 +144,8 @@ export function useProfileStore() {
       );
 
       const nextJob: StoredJob = existing
-        ? { ...existing, code, name }
-        : { id: safeRandomUUID(), code, name };
+        ? { ...existing, code, name, companyId }
+        : { id: safeRandomUUID(), code, name, companyId };
 
       const jobs = existing
         ? previous.jobs.map((job) => (job.id === existing.id ? nextJob : job))
