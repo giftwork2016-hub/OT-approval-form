@@ -40,11 +40,11 @@ Next.js App Route handlers under `/api/public/*` and `/api/approve/*`.
 ### Build & Lint
 
 ```bash
-CI=1 npm run build
+npm run lint
+npm run build
 ```
 
-The build command performs production compilation, linting, and type checking. (Running `next lint` directly prompts for
-interactive setup in this environment.)
+The lint command uses the project ESLint configuration, while the build command performs production compilation, linting, and type checking.
 
 ## Project Structure
 
