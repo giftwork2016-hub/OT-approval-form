@@ -34,17 +34,22 @@ npm install
 npm run dev
 ```
 
+> [!NOTE]
+> If a Codespace has a stale `node_modules/next/dist` directory from a previous build, `npm install` can fail while trying to
+> delete those artifacts. Clean the directory (`rm -rf node_modules/.cache next`) and retry the install, or run `npm install --force`
+> once to let npm replace the corrupted files.
+
 The application runs at [http://localhost:3000](http://localhost:3000). Autocomplete APIs and approval routes are served via
 Next.js App Route handlers under `/api/public/*` and `/api/approve/*`.
 
 ### Build & Lint
 
 ```bash
-CI=1 npm run build
+npm run lint
+npm run build
 ```
 
-The build command performs production compilation, linting, and type checking. (Running `next lint` directly prompts for
-interactive setup in this environment.)
+The lint command uses the project ESLint configuration, while the build command performs production compilation, linting, and type checking.
 
 ## Project Structure
 
