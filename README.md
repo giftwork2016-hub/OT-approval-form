@@ -36,6 +36,7 @@ npm run dev
 
 > [!NOTE]
 
+
 The application runs at [http://localhost:3000](http://localhost:3000). Autocomplete APIs and approval routes are served via
 Next.js App Route handlers under `/api/public/*` and `/api/approve/*`.
 
