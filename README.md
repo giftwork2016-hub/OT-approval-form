@@ -35,9 +35,6 @@ npm run dev
 ```
 
 > [!NOTE]
-> The repository ships with an `.npmrc` that enables `--force` installs. Codespaces occasionally leaves stale files inside
-> `node_modules/next/dist`, and forcing the reinstall allows `npm install` to succeed without manual cleanup. The warning that
-> the recommended protections are disabled is expected in that environment.
 
 The application runs at [http://localhost:3000](http://localhost:3000). Autocomplete APIs and approval routes are served via
 Next.js App Route handlers under `/api/public/*` and `/api/approve/*`.
